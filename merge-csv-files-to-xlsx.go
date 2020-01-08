@@ -35,7 +35,7 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("i: %d, sheetName: %s\n", i, sheetName)
+		fmt.Printf("Adding sheet \"%s\" from %s\n", sheetName, csvPath)
 		csvPath := sheets[i+1]
 
 		addSheetFromCsv(file, sheetName, csvPath)
