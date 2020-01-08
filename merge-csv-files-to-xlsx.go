@@ -12,16 +12,17 @@ import (
 
 func main() {
 	prog := os.Args[0]
+
+	if len(os.Args) < 4 || len(os.Args)%2 != 0 {
+		fmt.Printf("usage: %s <output> <sheet name> <csv path> [[<sheet name> <csv path>] ...]\n", prog)
+		os.Exit(1)
+	}
+
 	filePath := os.Args[1]
 	sheets := os.Args[2:]
 
 	fmt.Printf("filePath: %s\n", filePath)
 	fmt.Printf("sheets: %v\n", sheets)
-
-	if len(sheets) < 2 || len(sheets)%2 != 0 {
-		fmt.Printf("usage: %s <output> <sheet name> <csv path> [[<sheet name> <csv path>] ...]\n", prog)
-		os.Exit(1)
-	}
 
 	// Convert CSV files to XLSX sheets
 	file := xlsx.NewFile()
