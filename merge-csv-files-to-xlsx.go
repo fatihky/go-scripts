@@ -4,6 +4,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"github.com/tealeg/xlsx"
+	"io"
+	"log"
 	"os"
 )
 
@@ -24,9 +26,10 @@ func main() {
 	fmt.Printf("filePath: %s\n", filePath)
 	fmt.Printf("sheets: %v\n", sheets)
 
-	// Convert CSV files to XLSX sheets
+	// Create a new Excel file
 	file := xlsx.NewFile()
 
+	// Convert CSV files to XLSX sheets
 	for i, sheetName := range sheets {
 		if i%2 != 0 {
 			continue
@@ -34,17 +37,14 @@ func main() {
 
 		fmt.Printf("i: %d, sheetName: %s\n", i, sheetName)
 		csvPath := sheets[i+1]
-		lines, err := parseCSV(csvPath)
 
-		if err != nil {
-			fmt.Printf("Error parsing csv: %e\n", err)
-		}
-
-		addSheet(file, sheetName, lines)
+		addSheetFromCsv(file, sheetName, csvPath)
 	}
 
+	// Save Excel file
 	err := file.Save(filePath)
 
+	// Check errors
 	if err != nil {
 		fmt.Printf(err.Error())
 	}
@@ -52,40 +52,44 @@ func main() {
 	fmt.Printf("Excel file saved to: %s\n", filePath)
 }
 
-func parseCSV(path string) ([][]string, error) {
-	f, err := os.Open(path)
+func addSheetFromCsv(file *xlsx.File, sheetName string, csvPath string) {
+	// Open CSV file
+	f, err := os.Open(csvPath)
 
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
-	defer f.Close() // this needs to be after the err check
+	// Create CSV reader
+	reader := csv.NewReader(f)
 
-	lines, err := csv.NewReader(f).ReadAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return lines, nil
-}
-
-func addSheet(file *xlsx.File, sheetName string, lines [][]string) error {
+	// Create sheet
 	sheet, err := file.AddSheet(sheetName)
 
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	for _, line := range lines {
-		row := sheet.AddRow()
+	// Walk over the lines
+	for {
+		line, err := reader.Read()
 
-		for _, col := range line {
-			cell := row.AddCell()
-
-			cell.SetValue(col)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
 		}
-	}
 
-	return nil
+		addRow(sheet, line)
+	}
+}
+
+func addRow(sheet *xlsx.Sheet, line []string) {
+	row := sheet.AddRow()
+
+	for _, col := range line {
+		cell := row.AddCell()
+
+		cell.SetValue(col)
+	}
 }
